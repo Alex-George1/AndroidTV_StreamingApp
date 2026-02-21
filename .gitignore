@@ -13,21 +13,8 @@
 migrate_working_dir/
 .github/
 
-# Flutter metadata
+# Flutter/Dart
 .metadata
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
@@ -36,42 +23,151 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+pubspec.lock
 
-# Symbolication related
-app.*.symbols
+# IDE & Editor
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+thumbs.db
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
-# Obfuscation related
-app.*.map.json
+# Android Studio & IntelliJ
+.android/
+*.apk
+*.ap_
+*.aab
+*.dex
+*.o
+/android/.gradle/
+/android/local.properties
+/android/captures/
+/android/intermediates/
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+/android/build/
+android/gradlew
+android/gradlew.bat
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# Android native compilation
+*.so
+*.dylib
+*.dll
+*.lib
+*.a
 
-# Android build-related
-android/.gradle/
-android/local.properties
-android/**/local.properties
+# Gradle
+.gradle
+/build/
+gradle-app.setting
+!gradle-wrapper.jar
 
-# Android keystore files
+# Kotlin
+.kotlin/
+*.kt.bak
+
+# Android
 *.keystore
 *.jks
+*.pem
+*.cer
+*.p12
+*.pfx
+debug.keystore
 
-# Environment files
+# Environment & Configuration
 .env
-.env.*
+.env.local
+.env.*.local
+local.properties
+*.properties
 
-# Merge conflict markers
+# Merge conflicts
 *.orig
+*.rej
+*.conflict
 
-# Coverage reports
+# Test & Coverage
 coverage/
 .coverage/
+.nyc_output/
+lcov.info
+*.lcov
+test/**/*_test.dart
+test/.test-cache/
 
-# Windows build files
-windows/flutter/ephemeral/
+# Generated code
+*.g.dart
+*.config.dart
+*.chopper.dart
+*.freezed.dart
 
-# macOS build files
+# Web
+/web/packages/
+/web/dart_sdk/
+/web/.dart_tool/
+
+# macOS
 macos/Flutter/Flutter-Release.xcconfig
 macos/Flutter/Flutter-Debug.xcconfig
 macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Flutter/ephemeral/
+macos/Podfile.lock
+macos/Pods/
+
+# iOS
+ios/Flutter/Flutter.podspec
+ios/Flutter/Flutter-Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Podfile.lock
+ios/Pods/
+
+# Windows
+windows/flutter/ephemeral/
+windows/flutter/generated_plugins.cmake
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugin_registrant.h
+
+# Linux
+linux/flutter/ephemeral/
+linux/flutter/generated_plugins.cmake
+linux/flutter/generated_plugin_registrant.cc
+linux/flutter/generated_plugin_registrant.h
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+.#*
+
+# IDE cache
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Misc
+*.lock
+!pubspec.lock
+
