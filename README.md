@@ -61,7 +61,7 @@ assets/
 - **Flutter**: 3.6.1+
 - **State Management**: Provider
 - **Video Player**: ExoPlayer (via video_player)
-- **Image Caching**: cached_network_image
+- **Image Loading**: Flutter Image.network with timeout fallback
 - **Linting**: flutter_lints
 
 ## Supported Platforms

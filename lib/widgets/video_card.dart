@@ -1,5 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/video_item.dart';
 
@@ -26,6 +28,8 @@ class VideoCard extends StatefulWidget {
 class _VideoCardState extends State<VideoCard>
     with SingleTickerProviderStateMixin {
   bool _isFocused = false;
+  bool _imageTimedOut = false;
+  Timer? _timeoutTimer;
   late final AnimationController _animController;
   late final Animation<double> _scaleAnimation;
 
@@ -39,10 +43,17 @@ class _VideoCardState extends State<VideoCard>
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
       CurvedAnimation(parent: _animController, curve: Curves.easeOut),
     );
+    // If the image hasn't loaded after 8 seconds, show error state
+    _timeoutTimer = Timer(const Duration(seconds: 8), () {
+      if (mounted) {
+        setState(() => _imageTimedOut = true);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _timeoutTimer?.cancel();
     _animController.dispose();
     super.dispose();
   }
@@ -67,13 +78,50 @@ class _VideoCardState extends State<VideoCard>
     return '$minutes:${seconds.toString().padLeft(2, '0')}';
   }
 
+  Widget _buildErrorPlaceholder(BuildContext context) {
+    return Container(
+      color: Colors.grey[800],
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.image_not_supported,
+              color: Colors.white54,
+              size: 40,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'No Thumbnail',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Colors.white54,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Focus(
       autofocus: widget.autofocus,
       onFocusChange: _handleFocusChange,
       onKeyEvent: (node, event) {
-        // Let the system handle D-pad navigation
+        if (event is KeyDownEvent) {
+          // Handle D-pad center / Enter / Space to select the card
+          if (event.logicalKey == LogicalKeyboardKey.select ||
+              event.logicalKey == LogicalKeyboardKey.enter ||
+              event.logicalKey == LogicalKeyboardKey.numpadEnter ||
+              event.logicalKey == LogicalKeyboardKey.gameButtonA ||
+              event.logicalKey == LogicalKeyboardKey.space) {
+            widget.onSelect();
+            return KeyEventResult.handled;
+          }
+        }
+        // Let D-pad arrow keys pass through for navigation
         return KeyEventResult.ignored;
       },
       child: GestureDetector(
@@ -117,24 +165,14 @@ class _VideoCardState extends State<VideoCard>
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  CachedNetworkImage(
-                    imageUrl: widget.video.thumbnailUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: Colors.grey[800],
-                      child: const Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
+                  // Base layer: always-visible placeholder
+                  _buildErrorPlaceholder(context),
+                  // Top layer: network image (covers placeholder on success)
+                  if (!_imageTimedOut)
+                    _NetworkThumbnail(
+                      url: widget.video.thumbnailUrl,
+                      onLoaded: () => _timeoutTimer?.cancel(),
                     ),
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey[800],
-                      child: const Icon(
-                        Icons.movie,
-                        color: Colors.white54,
-                        size: 40,
-                      ),
-                    ),
-                  ),
                   // Duration badge
                   if (widget.video.duration > Duration.zero)
                     Positioned(
@@ -200,6 +238,55 @@ class AnimatedBuilder extends StatelessWidget {
     return ScaleTransition(
       scale: animation,
       child: child,
+    );
+  }
+}
+
+/// Attempts to load a network thumbnail image.
+/// Shows the image on success, transparent on failure (so the
+/// placeholder underneath remains visible).
+class _NetworkThumbnail extends StatefulWidget {
+  final String url;
+  final VoidCallback onLoaded;
+
+  const _NetworkThumbnail({required this.url, required this.onLoaded});
+
+  @override
+  State<_NetworkThumbnail> createState() => _NetworkThumbnailState();
+}
+
+class _NetworkThumbnailState extends State<_NetworkThumbnail> {
+  bool _loaded = false;
+  bool _errored = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_errored) return const SizedBox.shrink();
+
+    return Image.network(
+      widget.url,
+      fit: BoxFit.cover,
+      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+        if (wasSynchronouslyLoaded || frame != null) {
+          // Image has decoded at least one frame — it's ready
+          if (!_loaded) {
+            _loaded = true;
+            widget.onLoaded();
+          }
+          return child;
+        }
+        // Still loading — show nothing (placeholder underneath is visible)
+        return const SizedBox.shrink();
+      },
+      errorBuilder: (context, error, stackTrace) {
+        // Mark errored so we don't retry
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && !_errored) {
+            setState(() => _errored = true);
+          }
+        });
+        return const SizedBox.shrink();
+      },
     );
   }
 }
