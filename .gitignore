@@ -11,6 +11,10 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+.github/
+
+# Flutter metadata
+.metadata
 
 # IntelliJ related
 *.iml
@@ -43,3 +47,31 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Android build-related
+android/.gradle/
+android/local.properties
+android/**/local.properties
+
+# Android keystore files
+*.keystore
+*.jks
+
+# Environment files
+.env
+.env.*
+
+# Merge conflict markers
+*.orig
+
+# Coverage reports
+coverage/
+.coverage/
+
+# Windows build files
+windows/flutter/ephemeral/
+
+# macOS build files
+macos/Flutter/Flutter-Release.xcconfig
+macos/Flutter/Flutter-Debug.xcconfig
+macos/Flutter/GeneratedPluginRegistrant.swift
