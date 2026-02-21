@@ -1,35 +1,82 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 import '../models/video_category.dart';
 import '../models/video_item.dart';
 
-/// Service responsible for loading video data from JSON assets.
-/// Acts as the data layer in MVVM architecture.
+/// Service responsible for loading video data from remote API or local JSON.
+/// Tries remote fetch first, falls back to bundled asset.
 class VideoService {
   static const String _assetPath = 'assets/data/videos.json';
 
-  /// Loads video categories from the bundled JSON asset.
-  Future<List<VideoCategory>> loadCategories() async {
-    try {
-      final jsonString = await rootBundle.loadString(_assetPath);
-      final jsonData = json.decode(jsonString) as Map<String, dynamic>;
-      final categoriesList = jsonData['categories'] as List<dynamic>;
+  /// Optional remote URL for dynamic video catalog.
+  /// Set to null to use local-only mode.
+  final String? remoteUrl;
 
-      return categoriesList
-          .map((c) => VideoCategory.fromJson(c as Map<String, dynamic>))
-          .toList();
+  /// HTTP client (injectable for testing).
+  final http.Client _httpClient;
+
+  VideoService({this.remoteUrl, http.Client? httpClient})
+      : _httpClient = httpClient ?? http.Client();
+
+  /// Loads video categories: tries remote API first, falls back to local asset.
+  Future<List<VideoCategory>> loadCategories() async {
+    // Try remote fetch first
+    if (remoteUrl != null) {
+      try {
+        final categories = await _fetchRemote(remoteUrl!);
+        if (categories.isNotEmpty) return categories;
+      } catch (_) {
+        // Fall through to local loading
+      }
+    }
+
+    // Fall back to local asset
+    try {
+      return await _loadFromAsset();
     } catch (e) {
-      // Return default data if JSON loading fails
       return _defaultCategories();
     }
+  }
+
+  /// Fetch video catalog from a remote URL.
+  Future<List<VideoCategory>> _fetchRemote(String url) async {
+    final response = await _httpClient
+        .get(Uri.parse(url))
+        .timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 200) {
+      return _parseJson(response.body);
+    }
+    throw Exception('HTTP ${response.statusCode}');
+  }
+
+  /// Load video catalog from the bundled JSON asset.
+  Future<List<VideoCategory>> _loadFromAsset() async {
+    final jsonString = await rootBundle.loadString(_assetPath);
+    return _parseJson(jsonString);
+  }
+
+  /// Parse JSON string into a list of VideoCategory.
+  List<VideoCategory> _parseJson(String jsonString) {
+    final jsonData = json.decode(jsonString) as Map<String, dynamic>;
+    final categoriesList = jsonData['categories'] as List<dynamic>;
+    return categoriesList
+        .map((c) => VideoCategory.fromJson(c as Map<String, dynamic>))
+        .toList();
   }
 
   /// Returns all videos from all categories as a flat list.
   Future<List<VideoItem>> loadAllVideos() async {
     final categories = await loadCategories();
     return categories.expand((c) => c.videos).toList();
+  }
+
+  /// Dispose the HTTP client when no longer needed.
+  void dispose() {
+    _httpClient.close();
   }
 
   /// Fallback data if asset loading fails.
