@@ -103,8 +103,16 @@ class _PlayerScreenBodyState extends State<_PlayerScreenBody> {
         return KeyEventResult.handled;
 
       case LogicalKeyboardKey.escape:
-      case LogicalKeyboardKey.goBack:
+        // Only handle Escape key here.
+        // goBack / D-pad back is handled by PopScope to avoid double-pop
+        // (system back dispatcher + onKeyEvent both fire on Android TV).
         Navigator.of(context).pop();
+        return KeyEventResult.handled;
+
+      case LogicalKeyboardKey.goBack:
+        // Consume the key event but do NOT call Navigator.pop() here.
+        // The Android system back dispatcher will handle the actual pop
+        // via PopScope. If we also pop here, it double-pops and exits the app.
         return KeyEventResult.handled;
 
       default:
@@ -114,38 +122,41 @@ class _PlayerScreenBodyState extends State<_PlayerScreenBody> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Focus(
-        focusNode: _playerFocusNode,
-        autofocus: true,
-        onKeyEvent: _handleKeyEvent,
-        child: GestureDetector(
-          onTap: _showControlsTemporarily,
-          behavior: HitTestBehavior.opaque,
-          child: Consumer<PlayerViewModel>(
-            builder: (context, vm, _) {
-              return Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Video player
-                  _buildVideoPlayer(vm),
-                  // Buffering indicator
-                  if (vm.isBuffering)
-                    const Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 3,
+    return PopScope(
+      canPop: true,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Focus(
+          focusNode: _playerFocusNode,
+          autofocus: true,
+          onKeyEvent: _handleKeyEvent,
+          child: GestureDetector(
+            onTap: _showControlsTemporarily,
+            behavior: HitTestBehavior.opaque,
+            child: Consumer<PlayerViewModel>(
+              builder: (context, vm, _) {
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Video player
+                    _buildVideoPlayer(vm),
+                    // Buffering indicator (only when not actively playing)
+                    if (vm.isBuffering && !vm.isPlaying)
+                      const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 3,
+                        ),
                       ),
-                    ),
-                  // Error overlay
-                  if (vm.hasError) _buildErrorOverlay(vm),
-                  // Playback controls overlay
-                  if (vm.showControls && !vm.hasError)
-                    _buildControlsOverlay(vm),
-                ],
-              );
-            },
+                    // Error overlay
+                    if (vm.hasError) _buildErrorOverlay(vm),
+                    // Playback controls overlay
+                    if (vm.showControls && !vm.hasError)
+                      _buildControlsOverlay(vm),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
