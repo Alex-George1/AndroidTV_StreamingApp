@@ -7,7 +7,7 @@ A Flutter app for Android TV that displays categorized video content with D-pad 
 - **TV-Style Layout**: Horizontal category rows with focusable video cards
 - **Full-Screen Playback**: ExoPlayer with remote control support (play/pause/seek/back)
 - **D-Pad Navigation**: Optimized for TV remotes and D-pad input
-- **Focus Animations**: 1.1x scale + purple glow on focus
+- **Focus Animations**: 1.1x scale + purple glow on focus + autoplay
 - **Dynamic Content**: Load videos from JSON asset (10+ videos across 4 categories)
 - **Android & Phone Compatible**: Runs on both Android TV and Android phones
 
@@ -58,7 +58,7 @@ assets/
 
 ## Tech Stack
 
-- **Flutter**: 3.6.1+
+- **Flutter**: 3.41.2+
 - **State Management**: Provider
 - **Video Player**: ExoPlayer (via video_player)
 - **Image Loading**: Flutter Image.network with timeout fallback
@@ -67,4 +67,4 @@ assets/
 ## Supported Platforms
 
 - Android TV (primary target)
-- Android Phone (portrait/landscape)
+- Android Phone (landscape)
